@@ -1,8 +1,8 @@
 {
-  "name": "node-skel",
+  "name": "subtwitter",
   "version": "0.0.1",
-  "description": "skeleton project for simple node stuff",
-  "main": "main.js",
+  "description": "twitter webapp",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,14 +10,17 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/alicemaz/node-skel.git"
+    "url": "https://github.com/alicemaz/subtwitter.git"
   },
   "dependencies": {
     "bluebird": "^2.10.2",
+    "dotenv": "^1.2.0",
+    "express": "^4.13.3",
     "lodash": "^3.10.1",
-    "twit": "^2.1.0"
+    "socket.io": "^1.3.7",
+    "twit": "alicemaz/twit"
   },
   "engines": {
-    "node": "~4.0.0"
+    "node": "~5.0.0"
   }
 }
