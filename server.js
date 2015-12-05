@@ -54,6 +54,8 @@ let buffer = [];
 let tsock = Promise.resolve();
 //same
 let followings = [];
+//ha ha ha...
+let favs = [];
 
 const organize = tweet => {
     if(tweet.retweeted_status) {
@@ -99,6 +101,21 @@ const sanitize = tweet => {
 
 io.on("connection", socket => {
     tsock = new Promise(Y => Y(socket));
+
+    //proof of concept, need a way to get list members I don't follow too
+    //perhaps search stream, perhaps secret account for second user stream
+    T.get("lists/members", {
+        owner_id: self,
+        slug: "favs",
+        count: 256,
+        include_entities: false,
+        skip_status: true
+    }, (err, data) => {
+        if(err) throw err;
+
+        favs = _(data.users).map(user => user.id_str).sortBy().value();
+    });
+
     socket.emit("join", "hello alice!");
 
     if(buffer.length > 0)
@@ -164,6 +181,11 @@ stream.on("tweet", tweet => {
     if((tweet.user.id_str == self && !tweet.retweeter) || _.indexOf(followings, tweet.user.id_str, true) != -1 || tweet.retweeter) {
         tsock.then(tsock => tsock.emit("timeline", tweet)).catch(err => console.log(err));
         console.log(`timeline: @${tweet.user.screen_name}: ${tweet.text}`);
+    }
+
+    if(_.indexOf(favs, tweet.user.id_str, true) != -1) {
+        tsock.then(tsock => tsock.emit("feed", tweet)).catch(err => console.log(err));
+        console.log(`feed: @${tweet.user.screen_name}: ${tweet.text}`);
     }
 
     if(tweet.in_reply_to_user_id == self && tweet.user.id_str != self) {

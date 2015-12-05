@@ -113,7 +113,6 @@
 
             const LIM = 500;
             const TZ = (new Date()).getTimezoneOffset() * 60 * 1000;
-            //const cols = ["timeline", "feed", "mentions"];
 
             const socket = io.connect("http://localhost:7001");
 
@@ -215,8 +214,8 @@
                     <div class="tweet-av"><img src="${tweet.user.profile_image_url}"></div>
                     <div class="tweet-txt">
                         <div class="tweet-head">
-                            <strong>${tweet.user.name}</strong> @${tweet.user.screen_name} ${contexts.icon(tweet)}<br/>
                             ${tweet.retweeter ? contexts.retweet(tweet) : tweet.in_reply_to_screen_name ? contexts.reply(tweet) : ""}
+                            <strong>${tweet.user.name}</strong> @${tweet.user.screen_name} ${contexts.icon(tweet)}<br/>
                             ${timestamp(tweet)} via ${tweet.source}
                         </div>
                         ${tweet.text}<br/>
@@ -244,6 +243,14 @@
 
                 streams.timeline.buffer.push(tweet);
                 timeline.insertBefore(buildTweet(tweet, "timeline"), timeline.firstChild);
+            });
+
+            socket.on("feed", tweet => {
+                //console.log(tweet);
+                streams.truncate();
+
+                streams.feed.buffer.push(tweet);
+                feed.insertBefore(buildTweet(tweet, "feed"), feed.firstChild);
             });
 
             socket.on("mentions", tweet => {
