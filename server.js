@@ -166,7 +166,7 @@ stream.on("tweet", tweet => {
         console.log(`timeline: @${tweet.user.screen_name}: ${tweet.text}`);
     }
 
-    if(tweet.in_reply_to_user_id == self && !tweet.user.id_str == self) {
+    if(tweet.in_reply_to_user_id == self && tweet.user.id_str != self) {
         tsock.then(tsock => tsock.emit("mentions", tweet)).catch(err => console.log(err));
         console.log(`mentions : @${tweet.user.screen_name}: ${tweet.text}`);
     }
