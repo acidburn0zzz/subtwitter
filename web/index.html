@@ -229,7 +229,7 @@
                 if(tweet.extras.photos) {
                     tweet.text += "<br/>";
 
-                    _.each(tweet.extra.photos, (photo, index) => {
+                    _.each(tweet.extras.photos, (photo, index) => {
                         let re = new RegExp(photo.text, "g");
                         tweet.text = tweet.text.replace(re, "");
                         tweet.text += `<a href="${photo.real}" target="_blank"><img class="stream-img${index > 0 ? "-sm" : ""} " src="${photo.real}"></a>${index == 0 && tweet.extras.photos.length > 1 ? "<br/>" : ""}`;
