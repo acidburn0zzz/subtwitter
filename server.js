@@ -36,7 +36,8 @@ const keys = [
 	"user",
 	"timestamp_ms",
     //custom
-    "retweeter"
+    "retweeter",
+    "extras"
 ];
 
 const ukeys = [
@@ -97,6 +98,45 @@ const sanitize = tweet => {
     return tweet;
 };
 
+//entities => hashtags, urls, user_mentions, symbols can exist as empty arrays
+//extended_entities or media do not exist when empty
+//quoted tweets get embedded... somewhere, didn't test that one
+const deurizize = tweet => {
+    let extras = {};
+
+    //TODO mentions, hashtags...
+    if(tweet.entities.urls.length > 0) {
+        let urls = _.map(tweet.entities.urls, item => {
+            return {
+                text: item.url,
+                pretty: item.display_url,
+                real: item.expanded_url
+            };
+        });
+
+        if(urls.length > 0)
+            extras.urls = urls;
+    }
+
+    //this prolly has stuff like vine/soundcloud/video/etc too
+    if(tweet.entities.media) {
+        let photos = _(tweet.entities.media)
+            .filter(item => item.type == "photo")
+            .map(item => {
+                return {
+                    text: item.url,
+                    pretty: item.display_url,
+                    real: item.media_url_https
+                };
+            })
+            .value();
+        if(photos.length > 0)
+            extras.photos = photos;
+    }
+
+    return extras;
+};
+
 //--------------------------
 
 io.on("connection", socket => {
@@ -104,6 +144,8 @@ io.on("connection", socket => {
 
     //proof of concept, need a way to get list members I don't follow too
     //perhaps search stream, perhaps secret account for second user stream
+    //conveniently thanks to my if logic this ignores their RTs
+    //but captures RTs of them
     T.get("lists/members", {
         owner_id: self,
         slug: "favs",
@@ -157,14 +199,24 @@ stream.on("friends", preamble =>
     followings = _.sortBy(_.map(preamble.friends, f => f.toString())));
 
 stream.on("tweet", tweet => {
+    //if(tweet.user.id_str == self)
+        //console.log("test test:\n"+JSON.stringify(tweet, null, "\t"));
+
     //FIXME ideally we'd check the buffer here so I see retweets of old tweets by friends
     //also FIXME these ifs are absurd make fns imo
     if(tweet.retweeted_status && (tweet.retweeted_status.user.id_str == self || _.indexOf(followings, tweet.retweeted_status.user.id_str, true) != -1))
         return;
-    
+
+    let extras = deurizize(tweet.retweeted_status || tweet);
+    console.log(JSON.stringify(tweet, null, "\t"));
+    console.log(JSON.stringify(extras, null, "\t"));
+
     tweet = organize(tweet);
     tweet = sanitize(tweet);
 
+    if(extras)
+        tweet.extras = extras;
+    
     //presently 3x client buffer
     //I... do want it in both places
     //design will eventually be client tells server what filters it wants

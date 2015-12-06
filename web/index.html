@@ -91,6 +91,16 @@
                 width: auto;
             }
 
+            .stream-img {
+                width: 100%;
+                height: auto;
+            }
+
+            .stream-img-sm {
+                width: 33%;
+                height: auto;
+            }
+
             @keyframes fadein {
                 from { opacity: 0; }
                 to   { opacity: 1; }
@@ -194,8 +204,6 @@
                 const inverse = action == base ? "un" + base : base;
                 const img = action == base ? base + "-on" : base;
 
-                console.log(action, base, inverse, img);
-
                 socket.emit(action, id_str);
 
                 _.each(streams.viewing(), stream => {
@@ -203,12 +211,31 @@
                     if(el) {
                         el.src = `img/${img}.png`;
                         el.setAttribute("onClick", `actions('${inverse}','${id_str}')`);
-                        console.log(`actions('${inverse}','${id_str}')`);
                     }
                 });
             };
 
             const buildTweet = (tweet, stream) => {
+                //TODO this replaces embedded tweet links fyi
+                //replace the link out with a modal
+                if(tweet.extras.urls) {
+                    _.each(tweet.extras.urls, url => {
+                        let re = new RegExp(url.text, "g");
+                        tweet.text = tweet.text.replace(re, `(<a href="${url.real}" target="_blank">${url.pretty}</a>)`);
+                    });
+                }
+
+                //TODO add support for multiple
+                if(tweet.extras.photos) {
+                    tweet.text += "<br/>";
+
+                    _.each(tweet.extra.photos, (photo, index) => {
+                        let re = new RegExp(photo.text, "g");
+                        tweet.text = tweet.text.replace(re, "");
+                        tweet.text += `<a href="${photo.real}" target="_blank"><img class="stream-img${index > 0 ? "-sm" : ""} " src="${photo.real}"></a>${index == 0 && tweet.extras.photos.length > 1 ? "<br/>" : ""}`;
+                    });
+                }
+                    
                 const el = `
                 <div id="${stream}-${tweet.id_str}" class="tweet">
                     <div class="tweet-av"><img src="${tweet.user.profile_image_url}"></div>
@@ -238,7 +265,7 @@
             });
 
             socket.on("timeline", tweet => {
-                //console.log(tweet);
+                console.log(tweet);
                 streams.truncate();
 
                 streams.timeline.buffer.push(tweet);
@@ -246,7 +273,7 @@
             });
 
             socket.on("feed", tweet => {
-                //console.log(tweet);
+                console.log(tweet);
                 streams.truncate();
 
                 streams.feed.buffer.push(tweet);
@@ -254,7 +281,7 @@
             });
 
             socket.on("mentions", tweet => {
-                //console.log(tweet);
+                console.log(tweet);
                 streams.truncate();
 
                 streams.mentions.buffer.push(tweet);
