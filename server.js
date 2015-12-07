@@ -51,12 +51,16 @@ const ukeys = [
 ];
 
 let buffer = [];
-//this is hacky but eh
+
+//FIXME(?) this is hacky but eh
+//basically I set these from callbacks on init
+//so I don't have to use promise semantics everywhere
+//there's prolly a more sensible way w/ generators or smth
+//alternatively I guess I could move the processing into a Promise.all?
+//ehhh... think about it. works fine atm tho
 let tsock = Promise.resolve();
-//same
 let followings = [];
-//ha ha ha...
-let favs = [];
+let feed = [];
 
 const organize = tweet => {
     if(tweet.retweeted_status) {
@@ -139,6 +143,10 @@ const deurizize = tweet => {
 
 //--------------------------
 
+exp.get("/io/port", (req, res) => {
+    res.send({ port: process.env.IOPORT });
+});
+
 io.on("connection", socket => {
     tsock = new Promise(Y => Y(socket));
 
@@ -146,17 +154,22 @@ io.on("connection", socket => {
     //perhaps search stream, perhaps secret account for second user stream
     //conveniently thanks to my if logic this ignores their RTs
     //but captures RTs of them
-    T.get("lists/members", {
-        owner_id: self,
-        slug: "favs",
-        count: 256,
-        include_entities: false,
-        skip_status: true
-    }, (err, data) => {
-        if(err) throw err;
+    if(process.env.FEED_LIST) {
+        T.get("lists/members", {
+            owner_id: self,
+            slug: process.env.FEED_LIST,
+            count: 256,
+            include_entities: false,
+            skip_status: true
+        }, (err, data) => {
+            if(err) {
+                console.log(`failed to get list ${process.env.FEED_LIST}`);
+                return;
+            }
 
-        favs = _(data.users).map(user => user.id_str).sortBy().value();
-    });
+            feed = _(data.users).map(user => user.id_str).sortBy().value();
+        });
+    }
 
     socket.emit("join", "hello alice!");
 
@@ -235,7 +248,7 @@ stream.on("tweet", tweet => {
         console.log(`timeline: @${tweet.user.screen_name}: ${tweet.text}`);
     }
 
-    if(_.indexOf(favs, tweet.user.id_str, true) != -1) {
+    if(_.indexOf(feed, tweet.user.id_str, true) != -1) {
         tsock.then(tsock => tsock.emit("feed", tweet)).catch(err => console.log(err));
         console.log(`feed: @${tweet.user.screen_name}: ${tweet.text}`);
     }

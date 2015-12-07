@@ -3,7 +3,34 @@
 const LIM = 500;
 const TZ = (new Date()).getTimezoneOffset() * 60 * 1000;
 
-const socket = io.connect("http://localhost:7001");
+let socket; 
+
+//FIXME ugh ok ok it's time to split this into files lol
+const ajax = (method,target) => {
+	return new Promise((Y,N) => {
+		let req = new XMLHttpRequest();
+
+		req.open(method, target, true);
+
+		req.onreadystatechange = () => {
+			if(req.readyState == 4) { 
+				if(req.status >= 200 && req.status < 400) { 
+					try {
+						let res = JSON.parse(req.response);
+						Y(res);
+					} catch(err) {
+						N(err);
+					}
+				}
+				else {
+					N(new Error(`${req.url} failed: ${req.status} ${req.statusText}`));
+				}
+			}
+		};
+
+		req.send();
+	});
+};
 
 //this design the same tweet could be copied in three places
 //this... is probably desirable
@@ -135,34 +162,38 @@ const buildTweet = (tweet, stream) => {
     return div;
 };
 
-socket.on("join", msg => {
-    console.log(msg);
-});
+ajax("GET", "/io/port").then(res => {
+    socket = io.connect(`http://localhost:${res.port}`);
 
-socket.on("log", msg => {
-    console.log(msg);
-});
+    socket.on("join", msg => {
+        console.log(msg);
+    });
 
-socket.on("timeline", tweet => {
-    console.log(tweet);
-    streams.truncate();
+    socket.on("log", msg => {
+        console.log(msg);
+    });
 
-    streams.timeline.buffer.push(tweet);
-    timeline.insertBefore(buildTweet(tweet, "timeline"), timeline.firstChild);
-});
+    socket.on("timeline", tweet => {
+        console.log(tweet);
+        streams.truncate();
 
-socket.on("feed", tweet => {
-    console.log(tweet);
-    streams.truncate();
+        streams.timeline.buffer.push(tweet);
+        timeline.insertBefore(buildTweet(tweet, "timeline"), timeline.firstChild);
+    });
 
-    streams.feed.buffer.push(tweet);
-    feed.insertBefore(buildTweet(tweet, "feed"), feed.firstChild);
-});
+    socket.on("feed", tweet => {
+        console.log(tweet);
+        streams.truncate();
 
-socket.on("mentions", tweet => {
-    console.log(tweet);
-    streams.truncate();
+        streams.feed.buffer.push(tweet);
+        feed.insertBefore(buildTweet(tweet, "feed"), feed.firstChild);
+    });
 
-    streams.mentions.buffer.push(tweet);
-    mentions.insertBefore(buildTweet(tweet, "mentions"), mentions.firstChild);
+    socket.on("mentions", tweet => {
+        console.log(tweet);
+        streams.truncate();
+
+        streams.mentions.buffer.push(tweet);
+        mentions.insertBefore(buildTweet(tweet, "mentions"), mentions.firstChild);
+    });
 });
