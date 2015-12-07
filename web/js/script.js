@@ -88,7 +88,7 @@ const contexts = {
     retweet: tweet =>
         `<img class="context-img" src="img/retweet-on.png"> ${tweet.retweeter}<br/>`,
     reply: tweet =>
-        `<img class="context-img" src="img/reply.png"> ${tweet.in_reply_to_screen_name}<br/>`,
+        `<img class="context-img" src="img/reply.png"> ${tweet.in_reply_to_name}<br/>`,
     icon: tweet => {
         if(tweet.user.protected)
             return '<img class="context-img" src="img/protected.png">';
