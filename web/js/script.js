@@ -66,55 +66,66 @@ const ajax = (method,target) => {
 //ideally number my lists automatically (and keep order constant if I can)
 //so like y a user and press number keys to toggle, post on esc if changes? u to undo mb?
 //then eventually filter toggles and such, prolly just stick up top and number them
-const keyups = evt => {
+//
+//UPDATE changing from keyup to keydown to catch enter... gah need tests soon
+//ohhhh ok unlike CERTAIN GAME ENGINES keydown fires many if held, this is a pleasant surprise
+const keydowns = evt => {
     if(state.display.compose)
         state.fns.composeCount();
 
     switch(evt.keyCode) {
         //enter
         case 13:
-            if(state.display.compose && (evt.ctrlKey || evt.metaKey) && state.fns.composeCount() <= 140) {
+            //TODO meta will display the tweet above box and thread 
+            //implement after I do tweet display
+            if(state.display.compose && (evt.ctrlKey /*|| evt.metaKey*/) && state.fns.composeCount() <= 140) {
                 let textarea = document.getElementById("compose-textarea");
 
-                //socket.emit("tweet", { text: textarea.value });
-                console.log(evt.cancelable);
-                console.log(`tweeting! ${textarea.value}`);
+                socket.emit("tweet", { status: textarea.value });
+                //console.log(`tweeting! ${textarea.value}`);
                 textarea.value = "";
                 state.fns.composeCount();
 
                 if(evt.ctrlKey) {
-                    //TODO yp from 27, make this a function or something lol
-                    //state.ground = true;
-                    //_.each(state.display, (val, key, obj) => obj[key] = false);
-                    //_.each(state.els, (val, key, obj) => obj[key].style.visibility = "hidden");
+                    //TODO yp from case 27, make this a function or something lol
+                    state.ground = true;
+                    _.each(state.display, (val, key, obj) => obj[key] = false);
+                    _.each(state.els, (val, key, obj) => obj[key].style.visibility = "hidden");
                 }
-                //evt.preventDefault();
+
+                evt.preventDefault();
             }
-            break;
+        break;
+
         //esc
         case 27:
             //undisplay all modals and drop to main screen
             state.ground = true;
             _.each(state.display, (val, key, obj) => obj[key] = false);
             _.each(state.els, (val, key, obj) => obj[key].style.visibility = "hidden");
-            break;
+        break;
+
         //n
         case 78:
-            //if main screen open new tweet else do nothing
-            //FIXME this is ehhhh idk
-            state.ground = false;
-            state.display.overlays = true;
-            state.display.compose = true;
-            state.els.overlayBkg.style.visibility = "visible";
-            state.els.overlayContainer.style.visibility = "visible";
-            state.els.compose.style.visibility = "visible";
+            if(state.ground) {
+                //if main screen open new tweet else do nothing
+                //FIXME this is ehhhh idk
+                state.ground = false;
+                state.display.overlays = true;
+                state.display.compose = true;
+                state.els.overlayBkg.style.visibility = "visible";
+                state.els.overlayContainer.style.visibility = "visible";
+                state.els.compose.style.visibility = "visible";
 
-            let textarea = document.getElementById("compose-textarea");
-            textarea.focus();
-            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+                let textarea = document.getElementById("compose-textarea");
+                textarea.focus();
+                textarea.setSelectionRange(textarea.value.length, textarea.value.length);
 
-            state.fns.composeCount();
-            break;
+                state.fns.composeCount();
+
+                evt.preventDefault();
+            }
+        break;
     }
 };
 
@@ -311,4 +322,4 @@ ajax("GET", "/io/port").then(res => {
     });
 });
 
-window.addEventListener("keyup", keyups, false);
+window.addEventListener("keydown", keydowns, false);

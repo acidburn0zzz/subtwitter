@@ -79,6 +79,10 @@ h3 {
     z-index: 200;
 }
 
+#compose-textarea {
+    padding: 1em;
+}
+
 #compose-bottom {
     text-align: right;
 }

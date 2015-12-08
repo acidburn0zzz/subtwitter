@@ -119,6 +119,8 @@ const sanitize = tweet => {
             return val;
         }
 
+        //FIXME wait actually none of these get replaced right on the client
+        //frontend bullshit with text ughh look into it
         if(typeof val == "string") {
             val = val.replace(/&(?!amp;)/g, "&amp;");
             val = val.replace(/[<>'"]/g, match => htmlEscapes[match]);
@@ -278,6 +280,20 @@ io.on("connection", socket => {
 
     if(buffer.length > 0)
         socket.emit("timeline", buffer[buffer.length - 1]);
+
+    socket.on("tweet", tweet => {
+        //in theory these checks happen on the client too
+        //and there's no like, users, the client user is running their own server.js
+        //but, doesn't hurt I guess
+        if(tweet.status.length > 140) {
+            socket.emit("log", `tweet "${tweet.status}" too long (${tweet.status.length})`);
+            return;
+        }
+
+        //TODO replies, eventually
+        T.post("statuses/update", { status: tweet.status }, (err, data) =>
+            err ? socket.emit("log", err) : socket.emit("log", `tweeted ${data.id_str}`));
+    });
 
     socket.on("like", id_str => {
         T.post("favorites/create", { id: id_str }, err =>
