@@ -7,8 +7,17 @@ html, body {
     height: 95%;
 }
 
+body {
+	color: #111;
+	background: #fff;
+}
+
 h1 {
     margin-left: 5px;
+}
+
+h3 {
+    margin-bottom: 10px;
 }
 
 .container {
@@ -25,6 +34,65 @@ h1 {
     flex-basis: 33%;
     border: 2px solid black;
     overflow-y: scroll;
+}
+
+#overlay-bkg {
+    visibility: hidden;
+    position: absolute;
+    background: #000;
+    opacity: 0.75;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 100;
+}
+
+/*
+    because opacity propagates to children
+    this class's very existance makes me angry
+*/
+#overlay-container {
+    visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: no-wrap;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    z-index: 200;
+}
+
+#compose {
+    visibility: hidden;
+    flex-grow: 0;
+    flex-shrink: 1;
+    flex-basis: content;
+    background: #fff;
+    border: 2px solid black;
+    padding: 1em;
+    z-index: 200;
+}
+
+#compose-bottom {
+    text-align: right;
+}
+
+#history {
+    visibility: hidden;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: content;
+    background: #fff;
+    border: 2px solid black;
+    border-bottom: 0;
+    padding: 1em;
+    z-index: 200;
 }
 
 .tweet {

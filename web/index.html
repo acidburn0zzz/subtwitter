@@ -2,6 +2,7 @@
 <html lang="en">
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <base href="/">
 		<title>subtwitter</title>
         <link rel="stylesheet" type="text/css" href="css/style.css">
         <script type="text/javascript" src="js/extern/socket.io.min.js"></script>
@@ -9,6 +10,24 @@
     </head>
     <body>
         <h1>subtwitter</h1>
+
+        <div id="overlay-bkg"></div>
+        <div id="overlay-container">
+        <!--
+            <div id="history">
+                <h3>test</h3>
+                <textarea rows="6" cols="60">test</textarea>
+            </div>
+        -->
+            <div id="compose">
+                <h3>compose</h3>
+                <textarea id="compose-textarea" rows="6" cols="60"></textarea>
+                <div id="compose-bottom">
+                    <span id="compose-char-count"></span>
+                    <img style="margin:0 0 -0.5em 0.5em;height:2em;width:auto;" src="img/cool.png">
+                </div>
+            </div>
+        </div>
 
         <div class="container">
             <div id="timeline"></div>

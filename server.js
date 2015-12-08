@@ -26,6 +26,13 @@ const T = new Twit({
 
 const self = /^[0-9]*/.exec(process.env.TWITTER_TOKEN);
 
+const htmlEscapes = {
+    "<": "&lt;",
+    ">": "&gt;",
+    "'": "&#x27;",
+    '"': "&#x22;"
+};
+
 const keys = [
 	"id_str",
 	"text",
@@ -107,19 +114,20 @@ const organize = tweet => {
 
 const sanitize = tweet => {
     tweet = _.mapValues(tweet, (val, key) => {
+        if(key == "source") {
+            val = /^<(?:.*?)>(.*)<\/a>$/.exec(val)[1];
+            return val;
+        }
+
         if(typeof val == "string") {
-            val.replace(/&(?!amp;)/g, "&amp;");
-            //FIXME does js let you do this in one pass
-            val.replace(/</g, "&lt;");
-            val.replace(/>/g, "&gt;");
-            val.replace(/'/g, "&#x27;");
-            val.replace(/"/g, "&#x22;");
-            if(key == "source")
-                val = /^<(?:.*?)>(.*)<\/a>$/.exec(val)[1];
-            else if(key == "profile_image_url")
+            val = val.replace(/&(?!amp;)/g, "&amp;");
+            val = val.replace(/[<>'"]/g, match => htmlEscapes[match]);
+        /* FIXME hilariously, fixing this breaks my link replacer
+            if(key == "profile_image_url")
                 ;
             else
-                val.replace(/\//g, "&#x2f;");
+                val = val.replace(/\//g, "&#x2f;");
+        */
         }
             
         return val;
@@ -319,7 +327,7 @@ stream.on("tweet", tweet => {
     tweet = sanitize(tweet);
     tweet.extras = extras;
     
-    console.log(JSON.stringify(tweet, null, "\t"));
+    //console.log(JSON.stringify(tweet, null, "\t"));
 
     //presently 3x client buffer
     //I... do want it in both places
@@ -327,6 +335,16 @@ stream.on("tweet", tweet => {
     //server returns a new buffer according to those filters
     //server serves new tweets accordingly
     //I thiiiink I want to emit based on column rather than let the client decide
+    //
+    //update... I need to do a tree I think
+    //maybe, replies look for their direct parent in the buffer
+    //binary search? better perf prolly with... something weighted toward end?
+    //anyway, stores a pointer, either null or an index offset
+    //or hm if it stores a reference and... wait, testing
+    //ok sweet so, if I store a "parent" ref it's not GCed when original is shifted off
+    //so do that, click a tweet and its thread is shown
+    //for deadends before top-level, have a "fetch thread" button to do GETs
+    //incidentally I should also write a wrapper that checks ratelimit first
     if(buffer.length > 1500)
         buffer.shift();
 
