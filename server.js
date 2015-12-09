@@ -1,7 +1,7 @@
 "use strict";
 
 if(process.env.NODE_ENV != "production")
-	require("dotenv").load();
+    require("dotenv").load();
 
 const _ = require("lodash");
 const Promise = require("bluebird");
@@ -18,10 +18,10 @@ const http = require("http").createServer();
 const io = require("socket.io")(http);
 
 const T = new Twit({
-	consumer_key: process.env.TWITTER_KEY,
-	consumer_secret: process.env.TWITTER_SECRET,
-	access_token: process.env.TWITTER_TOKEN,
-	access_token_secret: process.env.TWITTER_TOKEN_SECRET
+    consumer_key: process.env.TWITTER_KEY,
+    consumer_secret: process.env.TWITTER_SECRET,
+    access_token: process.env.TWITTER_TOKEN,
+    access_token_secret: process.env.TWITTER_TOKEN_SECRET
 });
 
 const self = /^[0-9]*/.exec(process.env.TWITTER_TOKEN);
@@ -34,14 +34,14 @@ const htmlEscapes = {
 };
 
 const keys = [
-	"id_str",
-	"text",
-	"source",
-	"in_reply_to_status_id_str",
+    "id_str",
+    "text",
+    "source",
+    "in_reply_to_status_id_str",
     "in_reply_to_user_id",
     "in_reply_to_screen_name",
-	"user",
-	"timestamp_ms",
+    "user",
+    "timestamp_ms",
     //custom
     "retweeter",
     "extras",
@@ -49,13 +49,13 @@ const keys = [
 ];
 
 const ukeys = [
-	"id_str",
-	"name",
-	"screen_name",
-	"description",
-	"verified",
+    "id_str",
+    "name",
+    "screen_name",
+    "description",
+    "verified",
     "protected",
-	"profile_image_url"
+    "profile_image_url"
 ];
 
 let buffer = [];
