@@ -60,22 +60,12 @@ const ukeys = [
 
 let buffer = [];
 
-//FIXME(?) this is hacky but eh
-//basically I set these from callbacks on init
-//so I don't have to use promise semantics everywhere
-//there's prolly a more sensible way w/ generators or smth
-//alternatively I guess I could move the processing into a Promise.all?
-//ehhh... think about it. works fine atm tho
-//"works fine" means if the resource is not there yet the stream callback fails gracefully
-//I want to archive my tweets with postgres later on so mm
-//this decoupling of the stream and the socket _is_ desirable
-//ooh actually the right thing to do is just explicitly handle the case of no clients
-//and have socket on disconnect put us back in that state
-//and I can run this on another computer and just hook in whenever, like I do with irc
-//yes good excellent TODO do that
-let tsock = Promise.resolve();
-let followings = [];
+//set on socketio connection
+let tsock = null;
 let feed = [];
+
+//set on stream connection
+let followings = [];
 
 const organize = tweet => {
     if(tweet.retweeted_status) {
@@ -253,6 +243,7 @@ exp.get("/io/port", (req, res) => {
 });
 
 io.on("connection", socket => {
+    //promise maaaybe unnecessary with the changes I made?
     tsock = new Promise(Y => Y(socket));
 
     //proof of concept, need a way to get list members I don't follow too
@@ -277,7 +268,16 @@ io.on("connection", socket => {
     }
 
     socket.emit("join", "hello alice!");
+    console.log("client connected");
 
+    //TODO check if the null thing is a race condition
+    socket.on("disconnect", () => {
+        tsock = null;
+        console.log("client disconnected");
+    });
+
+    //TODO now that I have clean (dis)connection, serve the full buffer on connect
+    //need to write code on clientside to receive/sort it so don't have to stress order
     if(buffer.length > 0)
         socket.emit("timeline", buffer[buffer.length - 1]);
 
@@ -368,19 +368,23 @@ stream.on("tweet", tweet => {
 
     console.log(`\n@${tweet.user.screen_name}: ${tweet.text}\n  => buffer`);
 
-    if(toTimeline(tweet)) {
-        tsock.then(tsock => tsock.emit("timeline", tweet)).catch(err => console.log(err));
-        console.log("  => timeline");
-    }
+    //in theory I could set this up now to do multiple sockets and keep refs in an array
+    //but I don't really have a use-case
+    if(tsock) { 
+        if(toTimeline(tweet)) {
+            tsock.then(tsock => tsock.emit("timeline", tweet)).catch(err => console.log(err));
+            console.log("  => timeline");
+        }
 
-    if(toFeed(tweet)) {
-        tsock.then(tsock => tsock.emit("feed", tweet)).catch(err => console.log(err));
-        console.log("  => feed");
-    }
+        if(toFeed(tweet)) {
+            tsock.then(tsock => tsock.emit("feed", tweet)).catch(err => console.log(err));
+            console.log("  => feed");
+        }
 
-    if(toMentions(tweet)) {
-        tsock.then(tsock => tsock.emit("mentions", tweet)).catch(err => console.log(err));
-        console.log("  => mentions");
+        if(toMentions(tweet)) {
+            tsock.then(tsock => tsock.emit("mentions", tweet)).catch(err => console.log(err));
+            console.log("  => mentions");
+        }
     }
 });
 

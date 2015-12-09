@@ -4,7 +4,7 @@
   "description": "twitter webapp",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "server": "nodemon -w server.js"
   },
   "author": "alice maz",
   "license": "MIT",
